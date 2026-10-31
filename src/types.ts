@@ -1,6 +1,12 @@
-export type FoodKey = 'steak' | 'burger' | 'chicken' | 'veggies';
+export type FoodKey =
+  | 'steak' | 'burger' | 'chicken' | 'veggies'
+  | 'pork' | 'ribs' | 'lamb' | 'sausage' | 'drumstick'
+  | 'salmon' | 'tuna' | 'whitefish'
+  | 'shrimp' | 'squid' | 'scallop'
+  | 'corn' | 'halloumi' | 'pineapple';
+export type FoodCategory = 'meat' | 'poultry' | 'fish' | 'seafood' | 'veg' | 'other';
 export type ThicknessKey = 'thin' | 'med' | 'thick';
-export interface Food { key: FoodKey; label: string; photoUrl: string; tint: string }
+export interface Food { key: FoodKey; label: string; photoUrl: string; tint: string; category: FoodCategory }
 export interface Thickness { key: ThicknessKey; label: string }
 export interface Doneness { key: string; label: string; mult: number }
 export interface Timer {

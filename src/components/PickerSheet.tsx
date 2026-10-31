@@ -3,11 +3,22 @@ import { View, Text, Pressable, ScrollView, Animated, Easing, StyleSheet, Access
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { PickerSheetProps, Food, Thickness, Doneness } from '../types';
+import type { PickerSheetProps, Food, Thickness, Doneness, FoodCategory } from '../types';
 import { useTheme, tokens } from '../theme';
 import { FOODS, THICKNESS, DONENESS } from '../foods';
 import { computeSeconds, fmt, halfPoint } from '../timing';
 import FoodPhoto from './FoodPhoto';
+
+type CategoryFilter = 'all' | FoodCategory;
+const CATEGORIES: { key: CategoryFilter; label: string }[] = [
+  { key: 'all', label: 'Todos' },
+  { key: 'meat', label: 'Carnes' },
+  { key: 'poultry', label: 'Aves' },
+  { key: 'fish', label: 'Pescados' },
+  { key: 'seafood', label: 'Mariscos' },
+  { key: 'veg', label: 'Verduras' },
+  { key: 'other', label: 'Otros' },
+];
 
 function Pill({ label, active, onPress }: { label: string; active: boolean; onPress(): void }) {
   const { s } = useTheme();
@@ -70,6 +81,7 @@ export default function PickerSheet({ onCancel, onConfirm }: PickerSheetProps) {
   const [thickness, setThickness] = useState<Thickness | null>(null);
   const [done, setDone] = useState<Doneness | null>(null);
   const [closing, setClosing] = useState(false);
+  const [category, setCategory] = useState<CategoryFilter>('all');
   const progress = useRef(new Animated.Value(0)).current;
   const summary = useRef(new Animated.Value(0)).current;
   const reduce = useRef(false);
@@ -100,6 +112,7 @@ export default function PickerSheet({ onCancel, onConfirm }: PickerSheetProps) {
   const innerW = Math.min(width - insets.left - insets.right, 600) - tokens.space[5] * 2;
   const tileW = (innerW - tokens.space[2]) / 2;
   const options = food ? DONEESS_OF(food) : [];
+  const visibleFoods = category === 'all' ? FOODS : FOODS.filter((f) => f.category === category);
 
   const confirm = () => {
     if (!ready || closing) return;
@@ -135,11 +148,24 @@ export default function PickerSheet({ onCancel, onConfirm }: PickerSheetProps) {
               <Text style={[tokens.type.title, { color: c.ink }]}>Add to Grill</Text>
 
               <Text style={s.sectionLabel}>FOOD</Text>
+              <View style={[st.row, { marginBottom: tokens.space[3] }]}>
+                {CATEGORIES.map((cat) => (
+                  <Pill
+                    key={cat.key}
+                    label={cat.label}
+                    active={category === cat.key}
+                    onPress={() => { Haptics.selectionAsync().catch(() => {}); setCategory(cat.key); }}
+                  />
+                ))}
+              </View>
               <View style={st.grid}>
-                {FOODS.map((f) => (
+                {visibleFoods.map((f) => (
                   <FoodTile key={f.key} food={f} width={tileW} active={food?.key === f.key} onPress={() => pickFood(f)} />
                 ))}
               </View>
+              {visibleFoods.length === 0 && (
+                <Text style={[tokens.type.body, { color: c.inkMuted }]}>No hay alimentos en esta categoría</Text>
+              )}
 
               <Text style={s.sectionLabel}>THICKNESS</Text>
               <View style={st.row}>
