@@ -8,7 +8,7 @@ import { useTheme, tokens } from '../theme';
 import { fmt, halfPoint } from '../timing';
 import FoodPhoto from './FoodPhoto';
 
-export default function TimerCard({ timer, onToggle, onRemove }: TimerCardProps) {
+export default function TimerCard({ timer, onToggle, onRemove, onConfirmFlip }: TimerCardProps) {
   const { c, s } = useTheme();
   const t = tokens;
   const enter = useRef(new Animated.Value(0)).current;
@@ -34,7 +34,7 @@ export default function TimerCard({ timer, onToggle, onRemove }: TimerCardProps)
   }, [pct, progress]);
 
   const half = halfPoint(timer.total);
-  const showFlip = !timer.done && timer.remaining <= half;
+  const showFlip = !timer.done && timer.awaitingFlip;
 
   useEffect(() => {
     if (!showFlip) return;
@@ -162,13 +162,29 @@ export default function TimerCard({ timer, onToggle, onRemove }: TimerCardProps)
                 ]}
               >
                 <Ionicons name="sync" size={14} color={c.accent} />
-                <Text style={[t.type.caption, { color: c.accent }]}>Flip it!</Text>
+                <Text style={[t.type.caption, { color: c.accent }]}>Gira ahora</Text>
               </Animated.View>
+            ) : timer.remaining <= half ? (
+              <Text style={[t.type.caption, { color: c.inkMuted }]}>Girado</Text>
             ) : (
               <Text style={[t.type.caption, { color: c.inkMuted }]}>Flip at {fmt(half)}</Text>
             )}
           </View>
-          {!timer.done && (
+          {showFlip && (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+                onConfirmFlip();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Ya lo giré ${timer.foodLabel}`}
+              style={({ pressed }) => [styles.confirmBtn, { backgroundColor: c.accent }, pressed && s.btnPressed]}
+            >
+              <Ionicons name="checkmark" size={20} color={c.accentInk} />
+              <Text style={[t.type.caption, { color: c.accentInk, fontWeight: '600' }]} numberOfLines={1}>Ya lo giré</Text>
+            </Pressable>
+          )}
+          {!timer.done && !showFlip && (
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -200,5 +216,6 @@ const styles = StyleSheet.create({
   fill: { height: 8, borderRadius: 4 },
   mark: { position: 'absolute', left: '50%', top: -2, width: 2, height: 12, borderRadius: 1 },
   controls: { flexDirection: 'row', alignItems: 'center', gap: tokens.space[3], minHeight: tokens.hit },
+  confirmBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: tokens.space[2], height: tokens.hit, paddingHorizontal: tokens.space[4], borderRadius: tokens.radius.control },
   flipBadge: { flexDirection: 'row', alignItems: 'center', gap: tokens.space[1], alignSelf: 'flex-start', paddingHorizontal: tokens.space[3], paddingVertical: tokens.space[1], borderRadius: tokens.radius.control },
 });

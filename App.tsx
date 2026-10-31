@@ -20,7 +20,7 @@ export default function App() {
 
 function Root() {
   const { s, dark, c } = useTheme();
-  const { timers, addTimer, removeTimer, toggleRunning } = useTimers();
+  const { timers, addTimer, removeTimer, toggleRunning, confirmFlip } = useTimers();
   const [showPicker, setShowPicker] = useState(false);
 
   const open = useCallback(() => setShowPicker(true), []);
@@ -56,6 +56,7 @@ function Root() {
               timer={t}
               onToggle={() => toggleRunning(t.id)}
               onRemove={() => removeTimer(t.id)}
+              onConfirmFlip={() => confirmFlip(t.id)}
             />
           ))}
         </ScrollView>

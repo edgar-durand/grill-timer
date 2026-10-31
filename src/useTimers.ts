@@ -61,6 +61,7 @@ function play(kind: 'flip' | 'done') {
 async function schedule(t: Timer): Promise<string[]> {
   const ids: string[] = [];
   if (Platform.OS === 'web') return ids;
+  if (t.awaitingFlip) return ids;
   try {
     const half = halfPoint(t.total);
     if (!t.flipped && t.remaining - half > 1) {
@@ -132,6 +133,7 @@ export function useTimers(): TimerStore {
       running: true,
       flipped: false,
       done: false,
+      awaitingFlip: false,
     };
     setTimers((prev) => [t, ...prev]);
     ensurePermission().then(() => arm(t));
@@ -142,8 +144,38 @@ export function useTimers(): TimerStore {
     setTimers((prev) => prev.filter((x) => x.id !== id));
   }, [cancel]);
 
+  const remind = useCallback((t: Timer) => {
+    if (Platform.OS === 'web') return;
+    Notifications.scheduleNotificationAsync({
+      content: {
+        title: `¡Gira el ${t.foodLabel}!`,
+        body: 'Toca «Ya lo giré» cuando lo hayas girado.',
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 1, repeats: false },
+    })
+      .then((nid) => {
+        if (!timersRef.current.some((x) => x.id === t.id)) {
+          Notifications.cancelScheduledNotificationAsync(nid).catch(() => {});
+          return;
+        }
+        const list = notifRef.current[t.id] || [];
+        list.push(nid);
+        notifRef.current[t.id] = list;
+      })
+      .catch(() => {});
+  }, []);
+
+  const confirmFlip = useCallback((id: number) => {
+    const t = timersRef.current.find((x) => x.id === id);
+    if (!t || !t.awaitingFlip) return;
+    cancel(id);
+    setTimers((prev) => prev.map((x) => (x.id === id ? { ...x, awaitingFlip: false, flipped: true } : x)));
+    arm({ ...t, awaitingFlip: false, flipped: true });
+  }, [arm, cancel]);
+
   const toggleRunning = useCallback((id: number) => {
     const t = timersRef.current.find((x) => x.id === id);
+    if (t?.awaitingFlip) return;
     if (t && !t.done) {
       if (t.running) cancel(id);
       else arm(t);
@@ -153,35 +185,36 @@ export function useTimers(): TimerStore {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      let warn = false;
       let finish = false;
+      const newly: Timer[] = [];
       for (const t of timersRef.current) {
-        if (!t.running || t.done) continue;
+        if (!t.running || t.done || t.awaitingFlip) continue;
         const remaining = t.remaining - 1;
         if (remaining <= 0) finish = true;
-        else if (!t.flipped && remaining <= halfPoint(t.total)) warn = true;
+        else if (!t.flipped && remaining <= halfPoint(t.total)) {
+          newly.push({ ...t, remaining, flipped: true, awaitingFlip: true });
+        }
       }
       setTimers((prev) => {
         let changed = false;
         const next = prev.map((t) => {
-          if (!t.running || t.done) return t;
+          if (!t.running || t.done || t.awaitingFlip) return t;
           changed = true;
           const remaining = t.remaining - 1;
           if (remaining <= 0) {
             return { ...t, remaining: 0, running: false, done: true, flipped: true };
           }
           if (!t.flipped && remaining <= halfPoint(t.total)) {
-            return { ...t, remaining, flipped: true };
+            return { ...t, remaining, flipped: true, awaitingFlip: true };
           }
           return { ...t, remaining };
         });
         return changed ? next : prev;
       });
-      if (warn) {
-        play('flip');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
-        if (Platform.OS === 'android') Vibration.vibrate([0, 200, 100, 200]);
-      }
+      newly.forEach((t) => {
+        cancel(t.id);
+        remind(t);
+      });
       if (finish) {
         play('done');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -189,7 +222,42 @@ export function useTimers(): TimerStore {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [cancel, remind]);
 
-  return { timers, addTimer, removeTimer, toggleRunning };
+  const anyAwaiting = timers.some((t) => t.awaitingFlip);
+
+  useEffect(() => {
+    if (!anyAwaiting) return;
+    const ring = () => {
+      play('flip');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      if (Platform.OS === 'android') {
+        try {
+          Vibration.vibrate([0, 200, 100, 200]);
+        } catch {}
+      }
+    };
+    ring();
+    const i = setInterval(ring, 2000);
+    return () => {
+      clearInterval(i);
+      if (Platform.OS === 'android') {
+        try {
+          Vibration.cancel();
+        } catch {}
+      }
+    };
+  }, [anyAwaiting]);
+
+  useEffect(() => {
+    if (!anyAwaiting) return;
+    const i = setInterval(() => {
+      timersRef.current.forEach((t) => {
+        if (t.awaitingFlip) remind(t);
+      });
+    }, 30000);
+    return () => clearInterval(i);
+  }, [anyAwaiting, remind]);
+
+  return { timers, addTimer, removeTimer, toggleRunning, confirmFlip };
 }

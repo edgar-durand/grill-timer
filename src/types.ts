@@ -12,6 +12,7 @@ export interface Doneness { key: string; label: string; mult: number }
 export interface Timer {
   id: number; food: FoodKey; foodLabel: string; thicknessLabel: string; doneLabel: string;
   total: number; remaining: number; running: boolean; flipped: boolean; done: boolean;
+  awaitingFlip: boolean;
   notificationIds?: string[];
 }
 export interface TimerConfig {
@@ -23,12 +24,13 @@ export interface TimerStore {
   addTimer(cfg: TimerConfig): void;
   removeTimer(id: number): void;
   toggleRunning(id: number): void;
+  confirmFlip(id: number): void;
 }
 export interface FoodPhotoProps {
   food: FoodKey; style?: import('react-native').StyleProp<import('react-native').ViewStyle>;
   zoom?: boolean; rounded?: number;
 }
 export interface HeaderProps { count: number; onAdd(): void }
-export interface TimerCardProps { timer: Timer; onToggle(): void; onRemove(): void }
+export interface TimerCardProps { timer: Timer; onToggle(): void; onRemove(): void; onConfirmFlip(): void }
 export interface EmptyStateProps { onAdd(): void }
 export interface PickerSheetProps { onCancel(): void; onConfirm(cfg: TimerConfig): void }
