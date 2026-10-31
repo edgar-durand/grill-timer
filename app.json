@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "Grill Timer",
+    "slug": "grill-timer",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true
+  }
+}
