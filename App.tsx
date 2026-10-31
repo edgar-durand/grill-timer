@@ -8,7 +8,7 @@ import Header from './src/components/Header';
 import TimerCard from './src/components/TimerCard';
 import EmptyState from './src/components/EmptyState';
 import PickerSheet from './src/components/PickerSheet';
-import FireBackground from './src/components/FireBackground';
+import VideoFireBackground from './src/components/VideoFireBackground';
 import type { TimerConfig, FireState } from './src/types';
 
 export default function App() {
@@ -49,7 +49,7 @@ function Root() {
       pointerEvents="none"
       style={[styles.fire, { backgroundColor: c.bg }]}
     >
-      <FireBackground state={fireState} flare={flare} />
+      <VideoFireBackground state={fireState} flare={flare} />
       {fireState !== 'off' && (
         <View
           pointerEvents="none"

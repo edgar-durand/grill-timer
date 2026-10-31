@@ -36,3 +36,4 @@ export interface EmptyStateProps { onAdd(): void }
 export interface PickerSheetProps { onCancel(): void; onConfirm(cfg: TimerConfig): void }
 export type FireState = 'off' | 'low' | 'burning' | 'ashes';
 export interface FireBackgroundProps { state: FireState; flare?: boolean }
+export interface VideoFireBackgroundProps { state: FireState; flare?: boolean }

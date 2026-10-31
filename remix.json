@@ -6,7 +6,10 @@
     "output": "dist"
   },
   "connect": [
-    "images.unsplash.com"
+    "images.unsplash.com",
+    "www.youtube.com",
+    "www.youtube-nocookie.com",
+    "i.ytimg.com"
   ],
   "secrets": {}
 }
