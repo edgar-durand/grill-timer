@@ -50,6 +50,12 @@ function Root() {
       style={[styles.fire, { backgroundColor: c.bg }]}
     >
       <FireBackground state={fireState} flare={flare} />
+      {fireState !== 'off' && (
+        <View
+          pointerEvents="none"
+          style={[styles.veil, { backgroundColor: c.bg }]}
+        />
+      )}
     </View>
     <SafeAreaView
       style={[s.screen, { backgroundColor: 'transparent' }]}
@@ -96,6 +102,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     top: 0,
     overflow: 'hidden',
+  },
+  veil: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    opacity: 0.3,
   },
   flex: { flex: 1 },
   emptyWrap: { flexGrow: 1 },
