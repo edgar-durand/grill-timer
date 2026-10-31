@@ -34,3 +34,5 @@ export interface HeaderProps { count: number; onAdd(): void }
 export interface TimerCardProps { timer: Timer; onToggle(): void; onRemove(): void; onConfirmFlip(): void }
 export interface EmptyStateProps { onAdd(): void }
 export interface PickerSheetProps { onCancel(): void; onConfirm(cfg: TimerConfig): void }
+export type FireState = 'off' | 'low' | 'burning' | 'ashes';
+export interface FireBackgroundProps { state: FireState; flare?: boolean }
